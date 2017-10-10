@@ -1,0 +1,27 @@
+#!/usr/bin/env php
+<?php
+$base_dir = __DIR__;
+require_once( "$base_dir/HESAHacking.php" );
+
+$records = readTSV( $source_dir."/course_aim.tsv" );
+
+$graph = new Graphite();
+$graph->ns( "hesa", "http://id.example.org/terms/" );
+$graph->ns( "aim", "http://id.example.org/course-aim/" );
+
+
+foreach( $records as $record ) {
+
+	$org = $graph->resource( "aim:".$record["Code"] );
+	$org->add( "rdf:type", "skos:Concept" );
+	$org->add( "rdf:type", "hesa:CourseAim" );
+	$org->add( "skos:inScheme", "aim:" );
+	$org->add( "skos:notation", $record["Code"], "lpduk:CourseAimSchemeDatatype" );
+	$org->add( "rdfs:label", $record["Label"] );
+		
+}
+
+print $graph->serialize("Turtle");
+
+exit;
+
