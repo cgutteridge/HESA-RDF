@@ -1,0 +1,32 @@
+#!/usr/bin/env php
+<?php
+$base_dir = __DIR__;
+require_once( "$base_dir/HESAHacking.php" );
+
+$fields = array( "ORG_ID", "ORG_NAME", "ACC_ID", "ACC_NAME", "URL" );
+$records = readCSV( $source_dir."/accreditation_list.txt", $fields );
+
+$graph = new Graphite();
+$graph->ns( "hesaorg", "http://id.example.org/organisation/" );
+$graph->ns( "hesaacc", "http://id.example.org/accreditation/" );
+$graph->ns( "hesa", "http://id.example.org/terms/" );
+
+foreach( $records as &$record ) {
+	$record["URL"] = cleanURL($record["URL"]);
+
+	$org = $graph->resource( "hesaorg:".$record["ORG_ID"] );
+	$org->add( "rdf:type", "org:Organization" );
+	$org->add( "rdf:type", "hesa:AccreditingOrganisation" );
+	$org->add( "rdfs:label", $record["ORG_NAME"], "literal" );
+	$org->add( "foaf:homepage", $record["URL"] );
+	
+	$acc = $graph->resource( "hesaacc:".$record["ACC_ID"] );
+	$acc->add( "rdf:type", "hesa:Accreditation" );
+	$acc->add( "rdfs:label", $record["ACC_NAME"], "literal" );
+	$acc->add( "hesa:accreditedBy", $org );
+
+}
+
+print $graph->serialize("Turtle");
+
+exit;

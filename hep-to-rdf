@@ -1,0 +1,113 @@
+#!/usr/bin/env php
+<?php
+$base_dir = __DIR__;
+require_once( "$base_dir/HESAHacking.php" );
+
+$records = readTSV( $source_dir."/master_hep.tsv" );
+
+$graph = new Graphite();
+$graph->ns( "hesa", "http://id.example.org/terms/" );
+$graph->ns( "ukbit", "http://id.example.org/uk-nations/" );
+$graph->ns( "ukreg", "http://id.example.org/uk-regions/" );
+$graph->ns( "provtype", "http://id.example.org/provider-type/" );
+$graph->ns( "partcat", "http://id.example.org/participation-category/" );
+$graph->ns( "ukprn", "http://id.learning-provider.data.ac.uk/ukprn/" );
+$graph->ns( "lpduk", "http://id.learning-provider.data.ac.uk/ns/" );
+$graph->ns( "postcode", "http://data.ordnancesurvey.co.uk/id/postcodeunit/" );
+$graph->ns( "postcodeterms", "http://data.ordnancesurvey.co.uk/ontology/postcode/" );
+
+$countryLabels = array( "E"=>"England", "S"=>"Scotland", "W"=>"Wales", "N"=>"Northern Ireland");
+
+foreach( $records as $record ) {
+	$org = $graph->resource( "ukprn:".$record["UKPRN"] );
+	
+	$org->add( "rdf:type", "org:Organization" );
+	$org->add( "rdf:type", "hesa:LearningProvider" );
+	$org->add( "rdf:type", "aiiso:Institution" );
+	$org->add( "skos:notation", $record["UKPRN"], "lpduk:UKPRNSchemeDatatype" );
+	$org->add( "skos:notation", $record["INSTID"], "lpduk:HESAIdSchemeDatatype" );
+	$org->add( "rdfs:label", $record["ProviderName"] );
+	$org->add( "skos:prefLabel", $record["ProviderName"] );
+	$org->add( "hesa:shortName", $record["ShortName"] );
+	$org->add( "skos:altLabel", $record["ShortName"] );
+
+	if( !empty( $record["URL"] )) {
+		$org->add( "foaf:homepage", cleanURL($record["URL"]));
+	}
+
+	if( !empty( $record["Postcode"] )) {
+		$postcode = $graph->resource( "postcode:".stripWhitespace( $record["Postcode"] ));
+		$postcode->add( "rdfs:label", $record["Postcode"] );
+		$postcode->add( "rdf:type", "postcodeterms:PostcodeUnit" );
+		$org->add( "postcodeterms:postcode", $postcode );
+		$org->add( "vcard:postal-code", $record["Postcode"] );
+	}
+
+	$org->add( "skos:notation", $record["ALPHA6"], "lpduk:ALPHA6SchemeDatatype" );
+		
+	$country = $graph->resource( "ukbit:".$record["CountryId"] );
+	$country->add( "rdf:type", "hesa:UKCountry" );
+	$country->add( "skos:notation", $record["CountryId"], "lpduk:UKCountrySchemeDatatype" );
+	$country->add( "skos:notation", $record["CountryISO"], "lpduk:ISOCountry2SchemeDatatype" );
+	$country->add( "rdfs:label", $countryLabels[ $record["CountryId"] ] );
+	$org->add( "hesa:country", $country );
+
+	if( !empty( $record["GovernmentRegionID"] ) ) {
+		$region = $graph->resource( "ukregion:".$record["GovernmentRegionID"] );
+		$region->add( "rdf:type", "hesa:UKRegion" );
+		$region->add( "skos:notation", $record["GovernmentRegionID"], "lpduk:UKRegionSchemeDatatype" );
+		$region->add( "rdfs:label", $record["GovernmentRegionLabel"] );
+		$org->add( "hesa:region", $region );
+	}
+
+	if( !empty( $record["ProviderType"] ) ) {
+		// this could also be a class of the org?
+		$ptype = $graph->resource( "provtype:".$record["ProviderType"] );
+		$ptype->add( "rdf:type", "hesa:ProviderType" );
+		$ptype->add( "rdf:type", "skos:Concept" );
+		$ptype->add( "skos:notation", $record["ProviderType"], "lpduk:ProviderTypeSchemeDatatype" );
+		$ptype->add( "rdfs:label", $record["ProviderType"] );
+		$org->add( "hesa:providerType", $ptype );
+	}
+
+	if( !empty( $record["ParticipationCategoryID"] ) ) {
+		$pcat = $graph->resource( "partcat:".$record["ParticipationCategoryID"] );
+		$pcat->add( "rdf:type", "hesa:ParticipationCategory" );
+		$pcat->add( "skos:notation", $record["ParticipationCategoryID"], "lpduk:ParticipationCategorySchemeDatatype" );
+		$pcat->add( "rdfs:label", $record["ParticipationCategoryLabel"] );
+		$org->add( "hesa:participationCategory", $pcat );
+	}
+
+	if( !empty( $record["UKRLPName"] ) ) {
+		$org->add( "hesa:UKRLPName", $record["UKRLPName"] );
+		$org->add( "skos:altLabel", $record["UKRLPName"] );
+	}
+		
+	if( !empty( $record["TradingName"] ) ) {
+		$org->add( "hesa:TradingName", $record["TradingName"] );
+		$org->add( "skos:altLabel", $record["TradingName"] );
+	}
+		
+}
+
+print $graph->serialize("Turtle");
+
+exit;
+
+#    [UKPRN] => 10007807
+#    [INSTID] => 0185
+#    [ProviderName] => University of Ulster
+#    [ShortName] => Ulster
+#  * [URL] => http://www.ulster.ac.uk/
+#  * [Postcode] => BT52 1SA
+#    [ALPHA6] => ULSTER
+#    [CountryId] => N
+#    [CountryISO] => XG
+#  * [GovernmentRegionID] => Y
+#  * [GovernmentRegionLabel] => Northern Ireland
+#  * [ProviderType] => HEI
+#  * [ParticipationCategoryID] => 01
+#  * [ParticipationCategoryLabel] => Full subscriber
+#  * [UKRLPName] => UNIVERSITY OF ULSTER
+#  * [TradingName] => 
+
