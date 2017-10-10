@@ -65,6 +65,7 @@ foreach( $records as $record ) {
 		$ptype = $graph->resource( "provtype:".$record["ProviderType"] );
 		$ptype->add( "rdf:type", "hesa:ProviderType" );
 		$ptype->add( "rdf:type", "skos:Concept" );
+		$ptype->add( "skos:inScheme", "provtype:" );
 		$ptype->add( "skos:notation", $record["ProviderType"], "lpduk:ProviderTypeSchemeDatatype" );
 		$ptype->add( "rdfs:label", $record["ProviderType"] );
 		$org->add( "hesa:providerType", $ptype );
@@ -73,6 +74,8 @@ foreach( $records as $record ) {
 	if( !empty( $record["ParticipationCategoryID"] ) ) {
 		$pcat = $graph->resource( "partcat:".$record["ParticipationCategoryID"] );
 		$pcat->add( "rdf:type", "hesa:ParticipationCategory" );
+		$pcat->add( "rdf:type", "skos:Concept" );
+		$ptype->add( "skos:inScheme", "partcat:" );
 		$pcat->add( "skos:notation", $record["ParticipationCategoryID"], "lpduk:ParticipationCategorySchemeDatatype" );
 		$pcat->add( "rdfs:label", $record["ParticipationCategoryLabel"] );
 		$org->add( "hesa:participationCategory", $pcat );
