@@ -3,11 +3,14 @@
 $base_dir = __DIR__;
 require_once( "$base_dir/HESAHacking.php" );
 
+$format = getFormatFromArgs($argv);
+
 $records = readTSV( $source_dir."/course_aim.tsv" );
 
 $graph = new Graphite();
 $graph->ns( "hesa", "http://id.example.org/terms/" );
 $graph->ns( "aim", "http://id.example.org/course-aim/" );
+$graph->ns( "lpduk", "http://id.learning-provider.data.ac.uk/ns/" );
 
 
 foreach( $records as $record ) {
@@ -21,7 +24,7 @@ foreach( $records as $record ) {
 		
 }
 
-print $graph->serialize("Turtle");
+print @$graph->serialize($format);
 
 exit;
 

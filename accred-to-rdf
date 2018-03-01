@@ -3,6 +3,8 @@
 $base_dir = __DIR__;
 require_once( "$base_dir/HESAHacking.php" );
 
+$format = getFormatFromArgs($argv);
+
 $fields = array( "ORG_ID", "ORG_NAME", "ACC_ID", "ACC_NAME", "URL" );
 $records = readCSV( $source_dir."/accreditation_list.txt", $fields );
 
@@ -27,6 +29,6 @@ foreach( $records as &$record ) {
 
 }
 
-print $graph->serialize("Turtle");
+print @$graph->serialize($format);
 
 exit;

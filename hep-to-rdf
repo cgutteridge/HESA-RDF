@@ -3,6 +3,8 @@
 $base_dir = __DIR__;
 require_once( "$base_dir/HESAHacking.php" );
 
+$format = getFormatFromArgs($argv);
+
 $records = readTSV( $source_dir."/master_hep.tsv" );
 
 $graph = new Graphite();
@@ -75,7 +77,7 @@ foreach( $records as $record ) {
 		$pcat = $graph->resource( "partcat:".$record["ParticipationCategoryID"] );
 		$pcat->add( "rdf:type", "hesa:ParticipationCategory" );
 		$pcat->add( "rdf:type", "skos:Concept" );
-		$ptype->add( "skos:inScheme", "partcat:" );
+		$pcat->add( "skos:inScheme", "partcat:" );
 		$pcat->add( "skos:notation", $record["ParticipationCategoryID"], "lpduk:ParticipationCategorySchemeDatatype" );
 		$pcat->add( "rdfs:label", $record["ParticipationCategoryLabel"] );
 		$org->add( "hesa:participationCategory", $pcat );
@@ -93,7 +95,7 @@ foreach( $records as $record ) {
 		
 }
 
-print $graph->serialize("Turtle");
+print @$graph->serialize($format);
 
 exit;
 

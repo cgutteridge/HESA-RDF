@@ -5,6 +5,16 @@ $source_dir = "$base_dir/source_data";
 require_once( "$base_dir/arc/ARC2.php" );
 require_once( "$base_dir/Graphite/Graphite.php" );
 
+# this function gets either Turtle or RDFXML from the cmd line args
+# or else complains
+function getFormatFromArgs($args) {
+	$format = $args[1];
+	if( $format != "Turtle" && $format != "RDFXML" ) {
+		die( "Please specify Turtle or RDFXML after the command name\n" );
+	}
+	return $format;
+}
+
 # read a csv file with optional assigned column headings
 # get otherwise use first row for headings
 function readCSV( $filename, $fields=null ) {
